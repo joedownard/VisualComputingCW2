@@ -58,12 +58,12 @@
                 'bunny-5000.obj',
                 function (object) {
                     let bunnyGeometry = object.children[0].geometry;
-                    bunnyGeometry.scale(0.2, 0.2, 0.2);
-                    bunnyGeometry.translate(-0.2, 0, 0);
+                    bunnyGeometry.scale(0.25, 0.25, 0.25);
+                    bunnyGeometry.translate(-0.25, 0.01, 0);
 
                     const bunny = new THREE.Mesh(bunnyGeometry, new THREE.MeshBasicMaterial({ color: 0xfffdd0 }));
                     bunny.name = "bunny";
-                    console.log(bunny);
+                    console.log(bunnyGeometry);
                     scene.add(bunny);
 
                     const edgeBunnyGeometry = new THREE.EdgesGeometry(bunnyGeometry);
@@ -72,10 +72,9 @@
                     edgeBunny.name = "edgeBunny";
                     scene.add(edgeBunny);
 
-                    const pointsBunnyGeometry = new THREE.BufferGeometry();
-                    pointsBunnyGeometry.fromGeometry(bunnyGeometry);
-                    //const pointsBunnyMaterial = new THREE.PointsMaterial({ color: 0xfffdd0, size: 0.1 });
-                    const pointsBunny = new THREE.Points(bunnyGeometry, pointsBunnyMaterial);
+                    const pointsBunnyGeometry = bunnyGeometry;
+                    const pointsBunnyMaterial = new THREE.PointsMaterial({ color: 0xfffdd0, size: 0.01 });
+                    const pointsBunny = new THREE.Points(pointsBunnyGeometry, pointsBunnyMaterial);
                     pointsBunny.name = "pointsBunny";
                     scene.add(pointsBunny);
                 },
@@ -87,10 +86,24 @@
                 }
             );
 
+            const texture = new THREE.TextureLoader();
+            const textures = [];
+            const materials = [];
+
+            textures[0] = texture.load('a.png');
+            textures[1] = texture.load('b.jpg');
+            textures[2] = texture.load('c.png');
+            textures[3] = texture.load('d.jpg');
+            textures[4] = texture.load('e.jpg');
+            textures[5] = texture.load('f.jpg');
+
+            for (var i = 0; i < 6; i++) {
+                materials.push(new THREE.MeshBasicMaterial({ map: textures[i] }));
+            }
+
             // TO DO: Draw a cube (requirement 1).
             const geometry = new THREE.BoxGeometry(1, 1, 1);
-            const material = new THREE.MeshBasicMaterial({ color: 0xe8eb34 });
-            const cube = new THREE.Mesh(geometry, material);
+            const cube = new THREE.Mesh(geometry, materials);
             cube.name = "cube";
             scene.add(cube);
 
@@ -112,6 +125,7 @@
             cameraTranslation = false;
             cameraCounter = 0;
             renderMode = "face";
+            renderModeBunny = "face";
 
             orbiting = false;
             last_x = 0;
@@ -172,29 +186,25 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // TO DO: This is a good place for code that rotates your cube (requirement 3).
-
             if (curr_x != last_x || curr_y != last_y) {
                 const vecA = computeArcballVec(last_x, last_y);
                 const vecB = computeArcballVec(curr_x, curr_y);
 
-                let angle = Math.acos(Math.min(1, vecA.dot(vecB)));
-                if (angle != 0) {
+                let angle = Math.acos(vecA.dot(vecB));
+                angle *= 30/Math.PI;
+                let axis = (vecA.cross(vecB));
+                axis.normalize();
 
-                    let axis_camera = vecA.cross(vecB);
-                    console.log(angle);
-                    console.log(axis_camera);
+                console.log(axis);
 
-                    let matrix = new THREE.Matrix4();
-                    matrix.makeRotationAxis(axis_camera, angle);
+                console.log(camera);
 
-                    camera.position.applyMatrix4(matrix);
-                    camera.lookAt(new THREE.Vector3(0, 0, 0));
-
-                    last_x = curr_x;
-                    last_y = curr_y;
-                }
-                console.log(angle);
+                let matrix = new THREE.Matrix4();
+                matrix.makeRotationAxis(axis, angle);
+                camera.position.applyMatrix4(matrix);
+                camera.lookAt(new THREE.Vector3(0, 0, 0));
+                last_x = curr_x;
+                last_y = curr_y;
             }
 
             if (cameraTranslation) {
@@ -226,7 +236,6 @@
                     if (scene.getObjectByName("bunny")) {
                         scene.getObjectByName("bunny").geometry.rotateX(Math.PI / 180);
                         scene.getObjectByName("edgeBunny").geometry.rotateX(Math.PI / 180);
-                        //scene.getObjectByName("pointsBunny").geometry.rotateX(Math.PI / 180);
                     }
                 } else if (rotationCounter <= 2 * Math.PI) {
                     scene.getObjectByName("cube").geometry.rotateY(Math.PI / 180);
@@ -236,7 +245,6 @@
                     if (scene.getObjectByName("bunny")) {
                         scene.getObjectByName("bunny").geometry.rotateY(Math.PI / 180);
                         scene.getObjectByName("edgeBunny").geometry.rotateY(Math.PI / 180);
-                        //scene.getObjectByName("pointsBunny").geometry.rotateY(Math.PI / 180);
                     }
                 } else if (rotationCounter <= 3 * Math.PI) {
                     scene.getObjectByName("cube").geometry.rotateZ(Math.PI / 180);
@@ -246,7 +254,6 @@
                     if (scene.getObjectByName("bunny")) {
                         scene.getObjectByName("bunny").geometry.rotateZ(Math.PI / 180);
                         scene.getObjectByName("edgeBunny").geometry.rotateZ(Math.PI / 180);
-                        //scene.getObjectByName("pointsBunny").geometry.rotateZ(Math.PI / 180);
                     }
                 } else {
                     rotationCounter = 0;
@@ -262,7 +269,7 @@
                 if (scene.getObjectByName("bunny")) {
                     scene.getObjectByName("bunny").visible = false;
                     scene.getObjectByName("edgeBunny").visible = true;
-                    //scene.getObjectByName("pointsBunny").visible = false;
+                    scene.getObjectByName("pointsBunny").visible = false;
                 }
 
             } else if (renderMode == "face") {
@@ -273,7 +280,7 @@
                 if (scene.getObjectByName("bunny")) {
                     scene.getObjectByName("bunny").visible = true;
                     scene.getObjectByName("edgeBunny").visible = false;
-                    //scene.getObjectByName("pointsBunny").visible = false;
+                    scene.getObjectByName("pointsBunny").visible = false;
                 }
             } else if (renderMode = "vertex") {
                 scene.getObjectByName("edge").visible = false;
@@ -283,25 +290,25 @@
                 if (scene.getObjectByName("bunny")) {
                     scene.getObjectByName("bunny").visible = false;
                     scene.getObjectByName("edgeBunny").visible = false;
-                    //scene.getObjectByName("pointsBunny").visible = true;
+                    scene.getObjectByName("pointsBunny").visible = true;
                 }
             }
             if (scene.getObjectByName("bunny")) {
                 if (renderModeBunny == "edge") {
                     scene.getObjectByName("bunny").visible = false;
                     scene.getObjectByName("edgeBunny").visible = true;
-                    //scene.getObjectByName("pointsBunny").visible = false;
+                    scene.getObjectByName("pointsBunny").visible = false;
 
 
                 } else if (renderModeBunny == "face") {
                     scene.getObjectByName("bunny").visible = true;
                     scene.getObjectByName("edgeBunny").visible = false;
-                    //scene.getObjectByName("pointsBunny").visible = false;
+                    scene.getObjectByName("pointsBunny").visible = false;
 
                 } else if (renderModeBunny = "vertex") {
                     scene.getObjectByName("bunny").visible = false;
                     scene.getObjectByName("edgeBunny").visible = false;
-                    //scene.getObjectByName("pointsBunny").visible = true;
+                    scene.getObjectByName("pointsBunny").visible = true;
 
                 }
             }
@@ -311,7 +318,7 @@
         }
 
         function computeArcballVec(x, y) {
-            const point = new THREE.Vector3((x / window.innerWidth * 2) - 1, -((y / window.innerHeight) - 1), 0);
+            const point = new THREE.Vector3((x / window.innerWidth * 2), -((y / window.innerHeight * 2)), 0);
             let OP_squared = x * x + y * y;
             if (OP_squared <= 1) {
                 point.z = Math.sqrt(1 - OP_squared)
