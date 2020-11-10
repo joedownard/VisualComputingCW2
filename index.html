@@ -1,0 +1,384 @@
+﻿<html>
+
+<head>
+    <title>CM20219 – Coursework 2 – WebGL</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="three.js"></script>
+    <script src="OBJloader.js"></script>
+
+    <script>
+        "use strict"; // https://stackoverflow.com/q/1335851/72470
+
+        // Global variables that are available in all functions.
+        // Note: You can add your own here, e.g. to store the rendering mode.
+        var camera, scene, renderer, mesh, rotationCounter, rotation, renderMode, renderModeBunny, cameraTranslation, cameraCounter, orbiting, last_x, last_y, curr_x, curr_y;
+
+        // Initialise the scene, and draw it for the first time.
+        init();
+        animate();
+
+        // Listen for keyboard events, to react to them.
+        // Note: there are also other event listeners, e.g. for mouse events.
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mousedown', handleMouseDown);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        // Scene initialisation. This function is only run once, at the very beginning.
+        function init() {
+            scene = new THREE.Scene();
+
+            // Set up the camera, move it to (3, 4, 5) and look at the origin (0, 0, 0).
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(3, 4, 5);
+            camera.lookAt(new THREE.Vector3(0, 0, 0));
+            console.log(camera);
+
+            // Draw a helper grid in the x-z plane (note: y is up).
+            scene.add(new THREE.GridHelper(10, 20, 0xffffff));
+
+            const loader = new THREE.OBJLoader();
+
+            loader.load(
+                'bunny-5000.obj',
+                function (object) {
+                    let bunnyGeometry = object.children[0].geometry;
+                    bunnyGeometry.scale(0.2, 0.2, 0.2);
+                    bunnyGeometry.translate(-0.2, 0, 0);
+
+                    const bunny = new THREE.Mesh(bunnyGeometry, new THREE.MeshBasicMaterial({ color: 0xfffdd0 }));
+                    bunny.name = "bunny";
+                    console.log(bunny);
+                    scene.add(bunny);
+
+                    const edgeBunnyGeometry = new THREE.EdgesGeometry(bunnyGeometry);
+                    const edgeBunnyMaterial = new THREE.LineBasicMaterial({ color: 0xfffdd0 });
+                    const edgeBunny = new THREE.LineSegments(edgeBunnyGeometry, edgeBunnyMaterial);
+                    edgeBunny.name = "edgeBunny";
+                    scene.add(edgeBunny);
+
+                    const pointsBunnyGeometry = new THREE.BufferGeometry();
+                    pointsBunnyGeometry.fromGeometry(bunnyGeometry);
+                    //const pointsBunnyMaterial = new THREE.PointsMaterial({ color: 0xfffdd0, size: 0.1 });
+                    const pointsBunny = new THREE.Points(bunnyGeometry, pointsBunnyMaterial);
+                    pointsBunny.name = "pointsBunny";
+                    scene.add(pointsBunny);
+                },
+                function (xhr) {
+                    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+                },
+                function (error) {
+                    console.log('An error happened');
+                }
+            );
+
+            // TO DO: Draw a cube (requirement 1).
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshBasicMaterial({ color: 0xe8eb34 });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.name = "cube";
+            scene.add(cube);
+
+            const edgeGeometry = new THREE.EdgesGeometry(geometry);
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xe8eb34 });
+            const edge = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+            edge.name = "edge";
+            scene.add(edge);
+
+            const pointsGeometry = new THREE.BufferGeometry();
+            pointsGeometry.fromGeometry(geometry);
+            const pointsMaterial = new THREE.PointsMaterial({ color: 0xe8eb34, size: 0.1 });
+            const points = new THREE.Points(pointsGeometry, pointsMaterial);
+            points.name = "points";
+            scene.add(points);
+
+            rotationCounter = 0;
+            rotation = true;
+            cameraTranslation = false;
+            cameraCounter = 0;
+            renderMode = "face";
+
+            orbiting = false;
+            last_x = 0;
+            last_y = 0;
+            curr_x = 0;
+            curr_y = 0;
+
+            // TO DO: Visualise the axes of the global coordinate system (requirment 2).
+
+            const pointsXLine = [];
+            pointsXLine.push(new THREE.Vector3(2, 0, 0));
+            pointsXLine.push(new THREE.Vector3(0, 0, 0));
+            const XLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsXLine);
+            const XLineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+            const XLine = new THREE.Line(XLineGeometry, XLineMaterial);
+
+            const pointsYLine = [];
+            pointsYLine.push(new THREE.Vector3(0, 2, 0));
+            pointsYLine.push(new THREE.Vector3(0, 0, 0));
+            const YLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsYLine);
+            const YLineMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+            const YLine = new THREE.Line(YLineGeometry, YLineMaterial);
+
+            const pointsZLine = [];
+            pointsZLine.push(new THREE.Vector3(0, 0, 2));
+            pointsZLine.push(new THREE.Vector3(0, 0, 0));
+            const ZLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsZLine);
+            const ZLineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+            const ZLine = new THREE.Line(ZLineGeometry, ZLineMaterial);
+
+            scene.add(XLine);
+            scene.add(YLine);
+            scene.add(ZLine);
+
+
+            // Basic ambient lighting.
+            scene.add(new THREE.AmbientLight(0xffffff));
+            // TO DO: add more complex lighting for 'face' rendering mode (requirement 4).
+
+            // Set up the Web GL renderer.
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio); // HiDPI/retina rendering
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Handle resizing of the browser window.
+            window.addEventListener('resize', handleResize, false);
+        }
+
+        // Handle resizing of the browser window.
+        function handleResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Animation loop function. This function is called whenever an update is required.
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // TO DO: This is a good place for code that rotates your cube (requirement 3).
+
+            if (curr_x != last_x || curr_y != last_y) {
+                const vecA = computeArcballVec(last_x, last_y);
+                const vecB = computeArcballVec(curr_x, curr_y);
+
+                let angle = Math.acos(Math.min(1, vecA.dot(vecB)));
+                if (angle != 0) {
+
+                    let axis_camera = vecA.cross(vecB);
+                    console.log(angle);
+                    console.log(axis_camera);
+
+                    let matrix = new THREE.Matrix4();
+                    matrix.makeRotationAxis(axis_camera, angle);
+
+                    camera.position.applyMatrix4(matrix);
+                    camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+                    last_x = curr_x;
+                    last_y = curr_y;
+                }
+                console.log(angle);
+            }
+
+            if (cameraTranslation) {
+                let ratio = Math.sin(cameraCounter);
+                let offset = ratio * 0.05;
+
+                if (cameraCounter <= 4 * Math.PI) {
+                    offset = (cameraCounter <= 2 * Math.PI) ? offset : -offset;
+                    camera.position.set(camera.position.x + offset, camera.position.y, camera.position.z)
+                } else if (cameraCounter <= 8 * Math.PI) {
+                    offset = (cameraCounter <= 6 * Math.PI) ? offset : -offset;
+                    camera.position.set(camera.position.x, camera.position.y + offset, camera.position.z)
+                } else if (cameraCounter <= 12 * Math.PI) {
+                    offset = (cameraCounter <= 10 * Math.PI) ? offset : -offset;
+                    camera.position.set(camera.position.x, camera.position.y, camera.position.z + offset)
+                } else {
+                    cameraCounter = 0;
+                }
+                cameraCounter += Math.PI / 60;
+            }
+
+
+            if (rotation) {
+                if (rotationCounter <= Math.PI) {
+                    scene.getObjectByName("cube").geometry.rotateX(Math.PI / 180);
+                    scene.getObjectByName("edge").geometry.rotateX(Math.PI / 180);
+                    scene.getObjectByName("points").geometry.rotateX(Math.PI / 180);
+
+                    if (scene.getObjectByName("bunny")) {
+                        scene.getObjectByName("bunny").geometry.rotateX(Math.PI / 180);
+                        scene.getObjectByName("edgeBunny").geometry.rotateX(Math.PI / 180);
+                        //scene.getObjectByName("pointsBunny").geometry.rotateX(Math.PI / 180);
+                    }
+                } else if (rotationCounter <= 2 * Math.PI) {
+                    scene.getObjectByName("cube").geometry.rotateY(Math.PI / 180);
+                    scene.getObjectByName("edge").geometry.rotateY(Math.PI / 180);
+                    scene.getObjectByName("points").geometry.rotateY(Math.PI / 180);
+
+                    if (scene.getObjectByName("bunny")) {
+                        scene.getObjectByName("bunny").geometry.rotateY(Math.PI / 180);
+                        scene.getObjectByName("edgeBunny").geometry.rotateY(Math.PI / 180);
+                        //scene.getObjectByName("pointsBunny").geometry.rotateY(Math.PI / 180);
+                    }
+                } else if (rotationCounter <= 3 * Math.PI) {
+                    scene.getObjectByName("cube").geometry.rotateZ(Math.PI / 180);
+                    scene.getObjectByName("edge").geometry.rotateZ(Math.PI / 180);
+                    scene.getObjectByName("points").geometry.rotateZ(Math.PI / 180);
+
+                    if (scene.getObjectByName("bunny")) {
+                        scene.getObjectByName("bunny").geometry.rotateZ(Math.PI / 180);
+                        scene.getObjectByName("edgeBunny").geometry.rotateZ(Math.PI / 180);
+                        //scene.getObjectByName("pointsBunny").geometry.rotateZ(Math.PI / 180);
+                    }
+                } else {
+                    rotationCounter = 0;
+                }
+                rotationCounter += Math.PI / 180;
+            }
+
+            if (renderMode == "edge") {
+                scene.getObjectByName("edge").visible = true;
+                scene.getObjectByName("cube").visible = false;
+                scene.getObjectByName("points").visible = false;
+
+                if (scene.getObjectByName("bunny")) {
+                    scene.getObjectByName("bunny").visible = false;
+                    scene.getObjectByName("edgeBunny").visible = true;
+                    //scene.getObjectByName("pointsBunny").visible = false;
+                }
+
+            } else if (renderMode == "face") {
+                scene.getObjectByName("edge").visible = false;
+                scene.getObjectByName("cube").visible = true;
+                scene.getObjectByName("points").visible = false;
+
+                if (scene.getObjectByName("bunny")) {
+                    scene.getObjectByName("bunny").visible = true;
+                    scene.getObjectByName("edgeBunny").visible = false;
+                    //scene.getObjectByName("pointsBunny").visible = false;
+                }
+            } else if (renderMode = "vertex") {
+                scene.getObjectByName("edge").visible = false;
+                scene.getObjectByName("cube").visible = false;
+                scene.getObjectByName("points").visible = true;
+
+                if (scene.getObjectByName("bunny")) {
+                    scene.getObjectByName("bunny").visible = false;
+                    scene.getObjectByName("edgeBunny").visible = false;
+                    //scene.getObjectByName("pointsBunny").visible = true;
+                }
+            }
+            if (scene.getObjectByName("bunny")) {
+                if (renderModeBunny == "edge") {
+                    scene.getObjectByName("bunny").visible = false;
+                    scene.getObjectByName("edgeBunny").visible = true;
+                    //scene.getObjectByName("pointsBunny").visible = false;
+
+
+                } else if (renderModeBunny == "face") {
+                    scene.getObjectByName("bunny").visible = true;
+                    scene.getObjectByName("edgeBunny").visible = false;
+                    //scene.getObjectByName("pointsBunny").visible = false;
+
+                } else if (renderModeBunny = "vertex") {
+                    scene.getObjectByName("bunny").visible = false;
+                    scene.getObjectByName("edgeBunny").visible = false;
+                    //scene.getObjectByName("pointsBunny").visible = true;
+
+                }
+            }
+
+            // Render the current scene to the screen.
+            renderer.render(scene, camera);
+        }
+
+        function computeArcballVec(x, y) {
+            const point = new THREE.Vector3((x / window.innerWidth * 2) - 1, -((y / window.innerHeight) - 1), 0);
+            let OP_squared = x * x + y * y;
+            if (OP_squared <= 1) {
+                point.z = Math.sqrt(1 - OP_squared)
+            } else {
+                point.normalize();
+            }
+            return point;
+        }
+
+        function handleMouseDown(event) {
+            last_x = event.clientX;
+            last_y = event.clientY;
+            orbiting = true;
+        }
+
+        function handleMouseMove(event) {
+            if (orbiting) {
+                curr_x = event.clientX;
+                curr_y = event.clientY;
+            }
+        }
+
+        function handleMouseUp(event) {
+            orbiting = false;
+        }
+
+        // Handle keyboard presses.
+        function handleKeyDown(event) {
+            switch (event.keyCode) {
+                // Render modes.
+                case 70: // f = face
+                    renderMode = "face";
+                    break;
+
+                case 69: // e = edge
+                    renderMode = "edge";
+                    break;
+
+                case 86: // v = vertex
+                    renderMode = "vertex";
+                    break;
+
+                case 83: // s = face
+                    renderModeBunny = "face";
+                    break;
+
+                case 72: // h = edge
+                    renderModeBunny = "edge";
+                    break;
+
+                case 80: // p = vertex
+                    renderModeBunny = "vertex";
+                    break;
+
+
+
+                // TO DO: add code for starting/stopping rotations (requirement 3).
+                case 82: // r = rotation
+                    rotation = !rotation;
+                    break;
+
+                case 84: // t = translation
+                    cameraTranslation = !cameraTranslation;
+                    break;
+            }
+        }
+    </script>
+</body>
+
+</html>
