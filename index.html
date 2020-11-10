@@ -58,8 +58,8 @@
                 'bunny-5000.obj',
                 function (object) {
                     let bunnyGeometry = object.children[0].geometry;
-                    bunnyGeometry.scale(0.25, 0.25, 0.25);
-                    bunnyGeometry.translate(-0.25, 0.01, 0);
+                    bunnyGeometry.scale(0.5, 0.5, 0.5);
+                    bunnyGeometry.translate(-0.5, 0.01, 0);
 
                     const bunny = new THREE.Mesh(bunnyGeometry, new THREE.MeshBasicMaterial({ color: 0xfffdd0 }));
                     bunny.name = "bunny";
@@ -102,7 +102,7 @@
             }
 
             // TO DO: Draw a cube (requirement 1).
-            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
             const cube = new THREE.Mesh(geometry, materials);
             cube.name = "cube";
             scene.add(cube);
@@ -121,7 +121,7 @@
             scene.add(points);
 
             rotationCounter = 0;
-            rotation = true;
+            rotation = false;
             cameraTranslation = false;
             cameraCounter = 0;
             renderMode = "face";
@@ -139,21 +139,21 @@
             pointsXLine.push(new THREE.Vector3(2, 0, 0));
             pointsXLine.push(new THREE.Vector3(0, 0, 0));
             const XLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsXLine);
-            const XLineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+            const XLineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000});
             const XLine = new THREE.Line(XLineGeometry, XLineMaterial);
 
             const pointsYLine = [];
             pointsYLine.push(new THREE.Vector3(0, 2, 0));
             pointsYLine.push(new THREE.Vector3(0, 0, 0));
             const YLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsYLine);
-            const YLineMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+            const YLineMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00});
             const YLine = new THREE.Line(YLineGeometry, YLineMaterial);
 
             const pointsZLine = [];
             pointsZLine.push(new THREE.Vector3(0, 0, 2));
             pointsZLine.push(new THREE.Vector3(0, 0, 0));
             const ZLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsZLine);
-            const ZLineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+            const ZLineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff});
             const ZLine = new THREE.Line(ZLineGeometry, ZLineMaterial);
 
             scene.add(XLine);
@@ -258,7 +258,7 @@
                 } else {
                     rotationCounter = 0;
                 }
-                rotationCounter += Math.PI / 180;
+                rotationCounter += Math.PI / 360;
             }
 
             if (renderMode == "edge") {
