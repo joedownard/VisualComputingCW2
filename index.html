@@ -376,8 +376,17 @@
 
 
                 // TO DO: add code for starting/stopping rotations (requirement 3).
-                case 82: // r = rotation
-                    rotation = !rotation;
+
+                    case 91: // z = z rotation
+                    z_rotation = !z_rotation;
+                    break;
+
+                    case 90: // y = y rotation
+                    y_rotation = !y_rotation;
+                    break;
+
+                    case 89: // x = x rotation
+                    x_rotation = !x_rotation;
                     break;
 
                 case 84: // t = translation
