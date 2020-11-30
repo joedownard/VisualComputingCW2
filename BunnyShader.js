@@ -4,19 +4,19 @@ var BunnyShader = {
 
 	vertexShader: [
 
-        "varying vec4 vertex;",
+		"varying vec4 vertex;",
 
 		"void main() {",
 
-        "	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
-        "   vertex = vec4(gl_Position);",
+		"	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+		"   vertex = vec4(gl_Position);",
 
 		"}"
 
-	].join( "\n" ),
+	].join("\n"),
 
 	fragmentShader: [
-        "varying vec4 vertex;",
+		"varying vec4 vertex;",
 
 		"void main() {",
 
@@ -24,6 +24,6 @@ var BunnyShader = {
 
 		"}"
 
-	].join( "\n" )
+	].join("\n")
 
-};
+};	
