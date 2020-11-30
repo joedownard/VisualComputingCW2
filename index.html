@@ -20,6 +20,7 @@
 <body>
     <script src="three.js"></script>
     <script src="OBJloader.js"></script>
+    <script src="BunnyShader.js"></script>
 
     <script>
         "use strict"; // https://stackoverflow.com/q/1335851/72470
@@ -44,6 +45,7 @@
         // Scene initialisation. This function is only run once, at the very beginning.
         function init() {
 
+
             renderMode = "face";
             renderModeBunny = "face";
 
@@ -67,9 +69,15 @@
                     bunnyGeometry.scale(0.5, 0.5, 0.5);
                     bunnyGeometry.translate(-0.5, 0.01, 0);
 
-                    const bunny = new THREE.Mesh(bunnyGeometry, new THREE.MeshBasicMaterial({ color: 0xfffdd0 }));
+                    const shader = new BunnyShader;
+
+                    const material = new THREE.ShaderMaterial({
+                        vertexShader: shader.vertexShader,
+                        fragmentShader: shader.fragmentShader
+                    });
+
+                    const bunny = new THREE.Mesh(bunnyGeometry, material);
                     bunny.name = "bunny";
-                    console.log(bunnyGeometry);
                     scene.add(bunny);
 
                     const edgeBunnyGeometry = new THREE.EdgesGeometry(bunnyGeometry);
