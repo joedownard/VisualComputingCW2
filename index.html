@@ -27,7 +27,7 @@
 
         // Global variables that are available in all functions.
         // Note: You can add your own here, e.g. to store the rendering mode.
-        var camera, scene, renderer, mesh, x_rotation, y_rotation, z_rotation, renderMode, renderModeBunny, orbiting, last_x, last_y, curr_x, curr_y, w_movement, a_movement, s_movement, d_movement, up_movement, down_movement;
+        var camera, scene, renderer, mesh, x_rotation, y_rotation, z_rotation, renderMode, renderModeBunny, orbiting, last_x, last_y, curr_x, curr_y, w_movement, a_movement, s_movement, d_movement, up_movement, down_movement, time_delta, rainbow_mode;
 
         // Initialise the scene, and draw it for the first time.
         init();
@@ -48,6 +48,13 @@
 
             renderMode = "face";
             renderModeBunny = "face";
+            orbiting = false;
+            time_delta = 0.0;
+            rainbow_mode = false;
+            last_x = 0;
+            last_y = 0;
+            curr_x = 0;
+            curr_y = 0;
 
             scene = new THREE.Scene();
 
@@ -69,7 +76,12 @@
                     bunnyGeometry.scale(0.5, 0.5, 0.5);
                     bunnyGeometry.translate(-0.5, 0.01, 0);
 
+                    const uniforms = {
+                        time_factor: { value: 0.5 },
+                    };
+
                     const material = new THREE.ShaderMaterial({
+                        uniforms: uniforms,
                         vertexShader: BunnyShader.vertexShader,
                         fragmentShader: BunnyShader.fragmentShader
                     });
@@ -130,12 +142,6 @@
             points.name = "points";
             scene.add(points);
 
-            orbiting = false;
-            last_x = 0;
-            last_y = 0;
-            curr_x = 0;
-            curr_y = 0;
-
             // Construct a red line in the x-axis
             const pointsXLine = [];
             pointsXLine.push(new THREE.Vector3(4, 0, 0));
@@ -143,26 +149,6 @@
             const XLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsXLine);
             const XLineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 1 });
             const XLine = new THREE.Line(XLineGeometry, XLineMaterial);
-
-            // Construct a red line in the x-axis
-            const pointsYLine = [];
-            pointsYLine.push(new THREE.Vector3(0, 4, 0));
-            pointsYLine.push(new THREE.Vector3(0, 0, 0));
-            const YLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsYLine);
-            const YLineMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 1 });
-            const YLine = new THREE.Line(YLineGeometry, YLineMaterial);
-
-            // Construct a blue line in the z-axis
-            const pointsZLine = [];
-            pointsZLine.push(new THREE.Vector3(0, 0, 4));
-            pointsZLine.push(new THREE.Vector3(0, 0, 0));
-            const ZLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsZLine);
-            const ZLineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff, linewidth: 1 });
-            const ZLine = new THREE.Line(ZLineGeometry, ZLineMaterial);
-
-            scene.add(XLine);
-            scene.add(YLine);
-            scene.add(ZLine);
 
 
             // Basic ambient lighting.
@@ -198,7 +184,43 @@
 
             renderModeControl();
 
+            if (scene.getObjectByName("bunny") && rainbow_mode) {
+                time_delta += 0.01;
+                console.log(scene.getObjectByName("bunny").material.uniforms.time_factor.value);
+                scene.getObjectByName("bunny").material.uniforms.time_factor.value = Math.sin(time_delta);
+            }
+
             renderer.render(scene, camera);
+        }
+
+        function constructAxisLines () {
+            // Construct a red line in the x-axis
+            const pointsXLine = [];
+            pointsXLine.push(new THREE.Vector3(4, 0, 0));
+            pointsXLine.push(new THREE.Vector3(0, 0, 0));
+            const XLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsXLine);
+            const XLineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 1 });
+            const XLine = new THREE.Line(XLineGeometry, XLineMaterial);
+
+            // Construct a red line in the x-axis
+            const pointsYLine = [];
+            pointsYLine.push(new THREE.Vector3(0, 4, 0));
+            pointsYLine.push(new THREE.Vector3(0, 0, 0));
+            const YLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsYLine);
+            const YLineMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 1 });
+            const YLine = new THREE.Line(YLineGeometry, YLineMaterial);
+
+            // Construct a blue line in the z-axis
+            const pointsZLine = [];
+            pointsZLine.push(new THREE.Vector3(0, 0, 4));
+            pointsZLine.push(new THREE.Vector3(0, 0, 0));
+            const ZLineGeometry = new THREE.BufferGeometry().setFromPoints(pointsZLine);
+            const ZLineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff, linewidth: 1 });
+            const ZLine = new THREE.Line(ZLineGeometry, ZLineMaterial);
+
+            scene.add(XLine);
+            scene.add(YLine);
+            scene.add(ZLine);
         }
 
         function cameraTranslationControl() {
@@ -446,8 +468,8 @@
                     down_movement = true;
                     break;
 
-                case 84: // t = translation
-                    cameraTranslation = !cameraTranslation;
+                case 82: // r = rainbow mode
+                    rainbow_mode = !rainbow_mode;
                     break;
             }
         }
